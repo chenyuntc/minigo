@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/home/yun/av/tools/python
 
 from gtp import GTP_LOOP
 import argparse

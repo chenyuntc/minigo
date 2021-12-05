@@ -58,8 +58,13 @@ class Chunk:
 
 class DataSet:
     def  __init__(self, dir_name):
-        self.buffer = []
-        self._load_data(dir_name)
+        # self.buffer = []
+        with open(dir_name,'rb') as f:
+            import dill
+            self.buffer = dill.load(f)
+        # self.buffer = dill
+        # self._load_data(dir_name)
+        # import ipdb; ipdb.set_trace()
 
     # Collect training data from sgf dirctor.
     def _load_data(self, dir_name):
@@ -127,8 +132,14 @@ class DataSet:
             policy = board.get_index(x, y)
         board.play(vtx)
         return policy
+    
+    def __getitem__(self, idx):
+        return self.get_batch()
 
-    def get_batch(self, batch_size):
+    def __len__(self):
+        return 1280000
+
+    def get_batch(self, batch_size=512):
         s = random.sample(self.buffer, k=batch_size)
         inputs_batch = []
         policy_batch = []
@@ -154,6 +165,7 @@ class TrainingPipe:
 
         # Prepare the data set from sgf files.
         self.data_set = DataSet(dir_name)
+        self.dataloader = dataloader = torch.utils.data.DataLoader(self.data_set, batch_size=1, shuffle=False, collate_fn=lambda x: x[0],num_workers=8)
         
     def running(self, max_step, verbose_step, batch_size, learning_rate, noplot):
         cross_entry = nn.CrossEntropyLoss()
@@ -163,10 +175,10 @@ class TrainingPipe:
         v_running_loss = 0
         running_loss_record = []
         clock_time = time.time()
-
-        for step in range(max_step):
+        from tqdm import tqdm
+        for step,data in tqdm(enumerate(self.dataloader)):
             # First, get the batch data.
-            inputs, target_p, target_v = self.data_set.get_batch(batch_size)
+            inputs, target_p, target_v = data #self.data_set.get_batch(batch_size)
 
             # Second, Move the data to GPU memory if we use it.
             if self.network.use_gpu:
