@@ -59,9 +59,13 @@ class Chunk:
 class DataSet:
     def  __init__(self, dir_name):
         # self.buffer = []
-        with open(dir_name,'rb') as f:
-            import dill
-            self.buffer = dill.load(f)
+        try:
+            with open(dir_name,'rb') as f:
+                import dill
+                self.buffer = dill.load(f)
+        except:
+            self._load_data(dir_name)
+
         # self.buffer = dill
         # self._load_data(dir_name)
         # import ipdb; ipdb.set_trace()
