@@ -177,6 +177,11 @@ class GTP_LOOP:
             self.engine.undo();
             self.success_print("")
         elif main == "genmove" and len(cmd) >= 2:
+            # import ipdb; ipdb.set_trace()
+            # genrate next move
+            self.success_print(self.engine.genmove(cmd[1]))
+        elif main == "debug" and len(cmd) >= 2:
+            import ipdb; ipdb.set_trace()
             # genrate next move
             self.success_print(self.engine.genmove(cmd[1]))
         elif main == "boardsize" and len(cmd) >= 2:

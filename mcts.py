@@ -1,3 +1,4 @@
+# Code from https://github.com/CGLemon/pyDLGO/blob/master/mcts.py
 from config import INPUT_CHANNELS
 from board import Board, PASS, RESIGN, BLACK, WHITE
 from network import Network
@@ -135,7 +136,10 @@ class Search:
         self.root_node.remove_superko(self.root_board)
         self.root_node.update(val)
 
-    def _play_simulation(self, color, curr_board, node):
+    def _play_simulation(self, color, curr_board:Board, node:Node):
+        # play simulation: return the lose rate of color
+        # node.value: winning rate of node.to_move/curr_board.to_move
+        # network.value: winning rate of curr_board.to_move
         value = None
         if curr_board.num_passes >= 2:
             # The game is over.
@@ -153,12 +157,12 @@ class Search:
             # Select the next node by PUCT algorithm. 
             vtx = node.puct_select()
             curr_board.to_move = color
-            curr_board.play(vtx)
-            color = (color + 1) % 2
+            curr_board.play(vtx) # automatically change to move
+            color = (color + 1) % 2 # NOTE: HERE
             next_node = node.children[vtx]
 
             # Search the next node.
-            value = self._play_simulation(color, curr_board, next_node)
+            value = self._play_simulation(color, curr_board, next_node) #curr_board.to_move, 
         else:
             # This is the termainated node. Now to expand it. 
             value = node.expand_children(curr_board, self.network)
@@ -166,7 +170,7 @@ class Search:
         assert value is not None, ""
         node.update(value)
 
-        return node.inverse(value)
+        return node.inverse(value) # TODO: why inverse
 
     def think(self, playouts, resign_threshold, verbose):
         # Get the best move by Monte carlo tree. The time controller and max playout limit
@@ -190,8 +194,8 @@ class Search:
         # Try to expand the root node first. We assume that the time will
         # be not over.
         self._prepare_root_node()
-
-        for _ in range(playouts):
+        from tqdm import tqdm
+        for _ in (range(playouts)):
             if self.time_control.should_stop(max_time):
                 break
 

@@ -1,3 +1,4 @@
+# code copied from https://github.com/CGLemon/pyDLGO/blob/master/time_control.py
 import time
 
 class TimeControl:

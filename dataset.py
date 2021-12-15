@@ -1,3 +1,4 @@
+# some lines of code are borrowed from https://github.com/CGLemon/pyDLGO/blob/master/train.py
 import random
 
 import numpy as np

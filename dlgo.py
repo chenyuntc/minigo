@@ -1,4 +1,7 @@
+# Code from https://github.com/CGLemon/pyDLGO/blob/master/dlgo.py
 #!/home/yun/av/tools/python
+import os
+os.environ['CUDA_VISIBLE_DEVICES']='0'
 
 from gtp import GTP_LOOP
 import argparse

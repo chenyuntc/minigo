@@ -1,3 +1,6 @@
+# code from https://github.com/ymgaq/Pyaq/blob/master/board.py
+#      and https://github.com/CGLemon/pyDLGO/blob/master/board.py
+
 from config import BOARD_SIZE, KOMI, INPUT_CHANNELS, PAST_MOVES
 import numpy as np
 import copy

@@ -1,35 +1,36 @@
+# code based on https://github.com/CGLemon/pyDLGO/blob/master/network.py
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from config import INPUT_CHANNELS, BLOCK_SIZE, FILTER_SIZE, USE_GPU
 
+
 class FullyConnect(nn.Module):
-    def __init__(self, in_size,
-                       out_size,
-                       relu=True,
-                       collector=None):
+    def __init__(
+        self,
+        in_size,
+        out_size,
+        relu=True,
+    ):
         super().__init__()
         self.relu = relu
         self.linear = nn.Linear(in_size, out_size)
-
-        if collector != None:
-            collector.append(self.linear.weight)
-            collector.append(self.linear.bias)
 
     def forward(self, x):
         x = self.linear(x)
         return F.relu(x, inplace=True) if self.relu else x
 
+
 class ConvBlock(nn.Module):
-    def __init__(self, in_channels,
-                       out_channels,
-                       kernel_size,
-                       relu=True,
-                       collector=None):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        kernel_size,
+        relu=True,
+    ):
         super().__init__()
- 
-        assert kernel_size in (1, 3)
         self.relu = relu
         self.conv = nn.Conv2d(
             in_channels,
@@ -38,95 +39,49 @@ class ConvBlock(nn.Module):
             padding=1 if kernel_size == 3 else 0,
             bias=True,
         )
-        self.bn = nn.BatchNorm2d(
-            out_channels,
-            eps=1e-5
-        )
+        self.bn = nn.BatchNorm2d(out_channels, eps=1e-5)
+        nn.init.kaiming_normal_(self.conv.weight, mode="fan_out", nonlinearity="relu")
 
-        if collector != None:
-            collector.append(self.conv.weight)
-            collector.append(self.conv.bias)
-            collector.append(self.bn.weight)
-            collector.append(self.bn.bias)
-            collector.append(self.bn.running_mean)
-            collector.append(self.bn.running_var)
-
-        nn.init.kaiming_normal_(self.conv.weight,
-                                mode="fan_out",
-                                nonlinearity="relu")
     def forward(self, x):
         x = self.conv(x)
         x = self.bn(x)
         return F.relu(x, inplace=True) if self.relu else x
 
-class ResBlock(nn.Module):
-    def __init__(self, channels, se_size=None, collector=None):
-        super().__init__()
-        self.with_se=False
-        self.channels=channels
 
+class ResBlock(nn.Module):
+    def __init__(self, channels):
+        super().__init__()
         self.conv1 = ConvBlock(
             in_channels=channels,
             out_channels=channels,
             kernel_size=3,
-            collector=collector
         )
         self.conv2 = ConvBlock(
             in_channels=channels,
             out_channels=channels,
             kernel_size=3,
             relu=False,
-            collector=collector
         )
-
-        if se_size != None:
-            self.with_se = True
-            self.avg_pool = nn.AdaptiveAvgPool2d(1)
-            self.extend = FullyConnect(
-                in_size=channels,
-                out_size=se_size,
-                relu=True,
-                collector=collector
-            )
-            self.squeeze = FullyConnect(
-                in_size=se_size,
-                out_size=2 * channels,
-                relu=False,
-                collector=collector
-            )
 
     def forward(self, x):
         identity = x
-
         out = self.conv1(x)
         out = self.conv2(out)
-        
-        if self.with_se:
-            b, c, _, _ = out.size()
-            seprocess = self.avg_pool(out)
-            seprocess = torch.flatten(seprocess, start_dim=1, end_dim=3)
-            seprocess = self.extend(seprocess)
-            seprocess = self.squeeze(seprocess)
-
-            gammas, betas = torch.split(seprocess, self.channels, dim=1)
-            gammas = torch.reshape(gammas, (b, c, 1, 1))
-            betas = torch.reshape(betas, (b, c, 1, 1))
-            out = torch.sigmoid(gammas) * out + betas
-            
         out += identity
-
         return F.relu(out, inplace=True)
 
 
 class Network(nn.Module):
-    def __init__(self, board_size,
-                       input_channels=INPUT_CHANNELS,
-                       block_size = BLOCK_SIZE,
-                       filter_size = FILTER_SIZE,
-                       use_gpu=USE_GPU):
+    def __init__(
+        self,
+        board_size,
+        input_channels=INPUT_CHANNELS,
+        block_size=BLOCK_SIZE,
+        filter_size=FILTER_SIZE,
+        use_gpu=USE_GPU,
+    ):
         super().__init__()
 
-        self.tensor_collector = []
         self.block_size = block_size
         self.residual_channels = filter_size
         self.policy_channels = 8
@@ -136,31 +91,23 @@ class Network(nn.Module):
         self.spatial_size = self.board_size ** 2
         self.input_channels = input_channels
         self.use_gpu = True if torch.cuda.is_available() and use_gpu else False
-        self.gpu_device = torch.device('cpu')
+        self.gpu_device = torch.device("cpu")
 
-        self.set_layers()
+        self.build_network()
         if self.use_gpu:
-            self.gpu_device = torch.device('cuda:0')
-            self.to_gpu_device()
+            self.gpu_device = torch.device("cuda")
+            self.cuda()
 
-    def to_gpu_device(self):
-        self = self.to(self.gpu_device)
-
-    def set_layers(self):
+    def build_network(self):
         self.input_conv = ConvBlock(
             in_channels=self.input_channels,
             out_channels=self.residual_channels,
             kernel_size=3,
             relu=True,
-            collector=self.tensor_collector
         )
 
         # residual tower
-        nn_stack = []
-        for s in range(self.block_size):
-            nn_stack.append(ResBlock(self.residual_channels,
-                                     None,
-                                     self.tensor_collector))
+        nn_stack = [ResBlock(self.residual_channels) for _ in range(self.block_size)]
         self.residual_tower = nn.Sequential(*nn_stack)
 
         # policy head
@@ -169,13 +116,11 @@ class Network(nn.Module):
             out_channels=self.policy_channels,
             kernel_size=1,
             relu=True,
-            collector=self.tensor_collector
         )
         self.policy_fc = FullyConnect(
             in_size=self.policy_channels * self.spatial_size,
             out_size=self.spatial_size + 1,
             relu=False,
-            collector=self.tensor_collector
         )
 
         # value head
@@ -184,20 +129,17 @@ class Network(nn.Module):
             out_channels=self.value_channels,
             kernel_size=1,
             relu=True,
-            collector=self.tensor_collector
         )
 
         self.value_fc = FullyConnect(
             in_size=self.value_channels * self.spatial_size,
             out_size=self.value_layers,
             relu=True,
-            collector=self.tensor_collector
         )
         self.winrate_fc = FullyConnect(
             in_size=self.value_layers,
             out_size=1,
             relu=False,
-            collector=self.tensor_collector
         )
 
     def forward(self, planes):
@@ -216,24 +158,24 @@ class Network(nn.Module):
         val = self.winrate_fc(val)
 
         return pol, torch.tanh(val)
-        
+
     def get_outputs(self, planes):
         m = nn.Softmax(dim=1)
         x = torch.unsqueeze(torch.tensor(planes, dtype=torch.float32), dim=0)
         if self.use_gpu:
-            x = x.to(self.gpu_device)
+            x = x.cuda()
         p, v = self.forward(x)
-        return m(p).data.tolist()[0], v.data.tolist()[0]
+        return m(p).item(), v.item()
 
     def trainable(self, t=True):
         torch.set_grad_enabled(t)
-        if t==True:
+        if t == True:
             self.train()
         else:
             self.eval()
 
-    def save_pt(self, filename):
+    def save_ckpt(self, filename):
         torch.save(self.state_dict(), filename)
 
-    def load_pt(self, filename):
-        self.load_state_dict(torch.load(filename, map_location=self.gpu_device))
+    def load_ckpt(self, filename):
+        self.load_state_dict(torch.load(filename, map_location="cpu"))

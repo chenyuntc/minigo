@@ -1,3 +1,4 @@
+# code copied from https://github.com/jtauber/sgf/blob/master/sgf.py
 import glob, os
 
 # map from numerical coordinates to letters used by SGF
