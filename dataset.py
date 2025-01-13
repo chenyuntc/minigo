@@ -4,8 +4,8 @@ import random
 import numpy as np
 import torch
 
-import sgf
-from board import BLACK, INVLD, NUM_INTESECTIONS, PASS, WHITE, Board
+from utils import sgf
+from utils.board import BLACK, INVLD, NUM_INTESECTIONS, PASS, WHITE, Board
 from config import BOARD_SIZE, INPUT_CHANNELS
 import dill
 

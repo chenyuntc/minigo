@@ -1,9 +1,9 @@
 from sys import stderr, stdout, stdin
-from board import Board, PASS, RESIGN, BLACK, WHITE, INVLD
+from utils.board import Board, PASS, RESIGN, BLACK, WHITE, INVLD
 from network import Network
-from mcts import Search
+from utils.mcts import Search
 from config import BOARD_SIZE, KOMI, INPUT_CHANNELS, PAST_MOVES
-from time_control import TimeControl
+from utils.time_control import TimeControl
 
 class GTP_ENGINE:
     def __init__(self, args):

@@ -15,8 +15,8 @@ import torch
 import torch.optim as optim
 from tqdm import tqdm
 
-from board import *
-from mcts import *
+from utils.board import *
+from utils.mcts import *
 
 
 class Dataset:

@@ -6,8 +6,8 @@ if hvd.rank()>8:
     torch.cuda.set_device(hvd.rank()%2)
 else:
     torch.cuda.set_device(0)
-from gtp import *
-from mcts import *
+from utils.gtp import *
+from utils.mcts import *
 import glob
 import numpy as np
 WEIGHTS_PATH='./behaviour_clone_model_weights'

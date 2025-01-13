@@ -1,8 +1,7 @@
 # Code from https://github.com/CGLemon/pyDLGO/blob/master/mcts.py
-from config import INPUT_CHANNELS
-from board import Board, PASS, RESIGN, BLACK, WHITE
-from network import Network
-from time_control import TimeControl
+from utils.board import Board, PASS, RESIGN, BLACK, WHITE
+from utils.network import Network
+from utils.time_control import TimeControl
 
 import math
 

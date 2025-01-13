@@ -1,6 +1,5 @@
 import os
 os.environ["OMP_NUM_THREADS"] = "1"
-# os.environ['']
 import time
 
 import torch
@@ -24,7 +23,7 @@ def main(
         batch_size=1,
         shuffle=False,
         collate_fn=lambda x: x[0],
-        num_workers=16,
+        num_workers=8,
     )
 
     cross_entry = nn.CrossEntropyLoss()
