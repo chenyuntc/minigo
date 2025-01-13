@@ -94,7 +94,8 @@ python train_self_play.py
 ```
 
 ## Acknowledgement
-This project was originally forked from  [CGLemon/pyDLGO](https://github.com/CGLemon/pyDLGO/) and incorporates codes from the following open-source projects:
+
+This project was originally built based on  [CGLemon/pyDLGO](https://github.com/CGLemon/pyDLGO/) and include codes from the following open-source projects:
 * [CGLemon/pyDLGO](https://github.com/CGLemon/pyDLGO/)
   - `mcts.py`: Monte Carlo Tree Search implementation
   - `gtp.py`: Go Text Protocol (GTP) support for playing against other Go programs
