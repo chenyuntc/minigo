@@ -1,5 +1,5 @@
 # Learning to Play Go
-This repository contains the code of our CSC2515 research project "Learning to Play Go". [📜Report](./assets/2515_report.pdf)
+This repository contains the code of "Learning to Play Go", our course project for CSC2515 (University of Toronto) in 2021. [📜Report](./assets/2515_report.pdf)
 
 In the project, we implement an agent that learns to play Go on $9*9$ board through behaviour cloning from human knowledge and then refined with self-play. 
 Our agent convincingly beats all baselines including several famous Go programs: 
